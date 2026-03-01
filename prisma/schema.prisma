@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Transaction {
+  id                  String               @id @default(uuid()) @db.Uuid
+  userId              String               @map("user_id") @db.Uuid
+  amount              Int
+  createdAt           DateTime             @default(now()) @map("created_at")
+  productTransactions ProductTransaction[]
+  idempotencyKeys     IdempotencyKey[]
+
+  @@index([userId])
+  @@map("transactions")
+}
+
+model ProductTransaction {
+  id              String      @id @default(uuid()) @db.Uuid
+  transactionId   String      @map("transaction_id") @db.Uuid
+  itemId          Int         @map("item_id")
+  priceAtPurchase Int         @map("price_at_purchase")
+  transaction     Transaction @relation(fields: [transactionId], references: [id])
+
+  @@index([transactionId])
+  @@index([itemId])
+  @@map("product_transactions")
+}
+
+model IdempotencyKey {
+  id             String      @id @default(uuid()) @db.Uuid
+  userId         String      @map("user_id") @db.Uuid
+  idempotencyKey String      @map("idempotency_key")
+  transactionId  String      @map("transaction_id") @db.Uuid
+  transaction    Transaction @relation(fields: [transactionId], references: [id])
+
+  @@unique([userId, idempotencyKey])
+  @@unique([transactionId])
+  @@map("idempotency_keys")
+}
