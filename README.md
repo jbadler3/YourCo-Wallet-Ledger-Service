@@ -58,7 +58,7 @@ Purchases run inside a Prisma transaction and acquire a Postgres transaction-sco
 
 
 ## Idempotency Note
-Credits and purchases require an `idempotency-key` header. The API stores `(user_id, idempotency_key)` in idempotency_keys with a unique index, so retries of the same logical request do not create duplicate ledger rows. If a duplicate key is seen (including a race that triggers `P2002`), the request is treated as already processed and returns success. There is also a unique index on `transaction_id` in `idempotency_keys` so that if something goes wrong, a transaction is not processed twice even if the idempotency key was changed. There is no unique index on `idempotency_keys` because two users should be able to use the same key for different transactions and not have failure. 
+Credits and purchases require an `idempotency-key` header. The API stores `(user_id, idempotency_key)` in idempotency_keys with a unique index, so retries of the same logical request do not create duplicate ledger rows. If a duplicate key is seen, the request is treated as already processed and returns success. There is also a unique index on `transaction_id` in `idempotency_keys` so that if something goes wrong, a transaction is not processed twice even if the idempotency key was changed. There is no unique index on `idempotency_keys` because two users should be able to use the same key for different transactions and not have failure. 
 
 ## Test Coverage
 
