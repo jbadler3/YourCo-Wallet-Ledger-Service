@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS "transactions" (
 CREATE TABLE IF NOT EXISTS "product_transactions" (
     "id" UUID NOT NULL,
     "transaction_id" UUID NOT NULL,
-    "item_id" INTEGER NOT NULL,
+    "item_id" UUID NOT NULL,
     "price_at_purchase" INTEGER NOT NULL,
 
     CONSTRAINT "product_transactions_pkey" PRIMARY KEY ("id")

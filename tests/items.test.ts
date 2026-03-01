@@ -15,9 +15,9 @@ describe("items endpoints", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual([
-      { itemId: 1, name: "Car", price: 500 },
-      { itemId: 2, name: "Bike", price: 250 },
-      { itemId: 3, name: "TV", price: 100 },
+      { itemId: "11111111-1111-1111-1111-111111111111", name: "Car", price: 500 },
+      { itemId: "22222222-2222-2222-2222-222222222222", name: "Bike", price: 250 },
+      { itemId: "33333333-3333-3333-3333-333333333333", name: "TV", price: 100 },
     ]);
   });
 });

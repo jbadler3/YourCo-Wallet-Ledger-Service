@@ -6,6 +6,10 @@ import { prisma } from "../src/lib/prisma";
 import { resetDatabase, TEST_USER_1 } from "./helpers/db";
 
 describe("purchases endpoint", () => {
+  const CAR_ITEM_ID = "11111111-1111-1111-1111-111111111111";
+  const BIKE_ITEM_ID = "22222222-2222-2222-2222-222222222222";
+  const TV_ITEM_ID = "33333333-3333-3333-3333-333333333333";
+
   beforeEach(async () => {
     await resetDatabase();
   });
@@ -15,7 +19,7 @@ describe("purchases endpoint", () => {
       .post("/api/purchases")
       .set("x-user-id", TEST_USER_1)
       .set("idempotency-key", "purchase-missing-item")
-      .send({ itemId: 999 });
+      .send({ itemId: "44444444-4444-4444-4444-444444444444" });
 
     expect(response.status).toBe(404);
   });
@@ -27,13 +31,13 @@ describe("purchases endpoint", () => {
       .post("/api/purchases")
       .set("x-user-id", TEST_USER_1)
       .set("idempotency-key", "purchase-1")
-      .send({ itemId: 1 });
+      .send({ itemId: CAR_ITEM_ID });
 
     const secondAttempt = await request(app)
       .post("/api/purchases")
       .set("x-user-id", TEST_USER_1)
       .set("idempotency-key", "purchase-2")
-      .send({ itemId: 1 });
+      .send({ itemId: CAR_ITEM_ID });
 
     expect(secondAttempt.status).toBe(409);
   });
@@ -45,7 +49,7 @@ describe("purchases endpoint", () => {
       .post("/api/purchases")
       .set("x-user-id", TEST_USER_1)
       .set("idempotency-key", "purchase-success")
-      .send({ itemId: 2 });
+      .send({ itemId: BIKE_ITEM_ID });
 
     expect(purchaseResponse.status).toBe(204);
 
@@ -65,12 +69,12 @@ describe("purchases endpoint", () => {
         .post("/api/purchases")
         .set("x-user-id", TEST_USER_1)
         .set("idempotency-key", "concurrency-a")
-        .send({ itemId: 1 }),
+        .send({ itemId: CAR_ITEM_ID }),
       request(app)
         .post("/api/purchases")
         .set("x-user-id", TEST_USER_1)
         .set("idempotency-key", "concurrency-b")
-        .send({ itemId: 1 }),
+        .send({ itemId: CAR_ITEM_ID }),
     ]);
 
     const statuses = [first.status, second.status].sort();
@@ -92,12 +96,12 @@ describe("purchases endpoint", () => {
         .post("/api/purchases")
         .set("x-user-id", TEST_USER_1)
         .set("idempotency-key", "concurrency-nonconflict-a")
-        .send({ itemId: 3 }),
+        .send({ itemId: TV_ITEM_ID }),
       request(app)
         .post("/api/purchases")
         .set("x-user-id", TEST_USER_1)
         .set("idempotency-key", "concurrency-nonconflict-b")
-        .send({ itemId: 3 }),
+        .send({ itemId: TV_ITEM_ID }),
     ]);
 
     expect(first.status).toBe(204);
@@ -119,7 +123,7 @@ describe("purchases endpoint", () => {
 
     const productTransactionCount = await prisma.productTransaction.count({
       where: {
-        itemId: 3,
+        itemId: TV_ITEM_ID,
       },
     });
 
@@ -129,10 +133,10 @@ describe("purchases endpoint", () => {
 
   it("persists priceAtPurchase even if item price changes later", async () => {
     const app = createApp();
-    const item = ITEMS.find((entry) => entry.itemId === 2);
+    const item = ITEMS.find((entry) => entry.itemId === BIKE_ITEM_ID);
 
     if (!item) {
-      throw new Error("Expected itemId 2 to exist in constants.");
+      throw new Error("Expected bike itemId to exist in constants.");
     }
 
     const originalPrice = item.price;
@@ -142,7 +146,7 @@ describe("purchases endpoint", () => {
         .post("/api/purchases")
         .set("x-user-id", TEST_USER_1)
         .set("idempotency-key", "purchase-price-persist")
-        .send({ itemId: 2 });
+        .send({ itemId: BIKE_ITEM_ID });
 
       expect(purchaseResponse.status).toBe(204);
 

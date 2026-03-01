@@ -11,6 +11,8 @@ class ItemNotFoundError extends Error {}
 class InsufficientBalanceError extends Error {}
 
 export const purchasesRouter = Router();
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const getUserBalance = async (tx: Prisma.TransactionClient, userId: string) => {
   const aggregateResult = await tx.transaction.aggregate({
@@ -28,10 +30,9 @@ const getUserBalance = async (tx: Prisma.TransactionClient, userId: string) => {
 purchasesRouter.post("/", async (request, response) => {
   const { itemId } = request.body as PurchaseRequestBody;
 
-  // itemId maps to the numeric itemId identifier in src/constants/items.ts.
-  if (typeof itemId !== "number" || !Number.isInteger(itemId) || itemId <= 0) {
+  if (typeof itemId !== "string" || !UUID_REGEX.test(itemId)) {
     response.status(400).json({
-      message: "itemId must be a positive integer item identifier.",
+      message: "itemId must be a valid UUID item identifier.",
     });
     return;
   }

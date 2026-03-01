@@ -2,6 +2,8 @@ import { Router } from "express";
 import { getItemByItemId, ITEMS } from "../constants/items";
 
 export const itemsRouter = Router();
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 itemsRouter.get("/", async (_request, response) => {
   // to do: implement pagination
@@ -9,11 +11,10 @@ itemsRouter.get("/", async (_request, response) => {
 });
 
 itemsRouter.get("/:itemId", async (request, response) => {
-  const itemId = Number.parseInt(request.params.itemId, 10);
-
-  if (Number.isNaN(itemId)) {
+  const itemId = request.params.itemId;
+  if (!UUID_REGEX.test(itemId)) {
     response.status(400).json({
-      message: "itemId must be a valid integer.",
+      message: "itemId must be a valid UUID.",
     });
     return;
   }

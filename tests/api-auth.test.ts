@@ -12,7 +12,11 @@ type ApiCase = {
 
 const apiCases: ApiCase[] = [
   { name: "GET /api/items", method: "get", path: "/api/items" },
-  { name: "GET /api/items/:itemId", method: "get", path: "/api/items/1" },
+  {
+    name: "GET /api/items/:itemId",
+    method: "get",
+    path: "/api/items/11111111-1111-1111-1111-111111111111",
+  },
   { name: "GET /api/balance", method: "get", path: "/api/balance" },
   { name: "POST /api/credits", method: "post", path: "/api/credits"  },
   { name: "POST /api/purchases", method: "post", path: "/api/purchases" },
