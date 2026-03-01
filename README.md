@@ -1,26 +1,22 @@
-## how to run locally
+## Run locally
 
 1. Install dependencies:
    - `npm install`
 2. Create your local environment file:
-   - copy `.env.example` to `.env`
+   - Copy `.env.example` to `.env`
 3. Update `DATABASE_URL` in `.env` to match your local Postgres instance.
-   - takes password, and database in the URL
-4. Generate Prisma client:
+   - Include your DB user, password, host, port, and database name in the URL.
+4. Start PostgreSQL locally and make sure `DATABASE_URL` points to the db you created.
+5. Generate Prisma client:
    - `npm run prisma:generate`
-
-## Run Locally
-
-1. Start PostgreSQL locally and make sure `DATABASE_URL` points to it.
-2. Apply migrations:
+6. Apply migrations:
    - `npm run prisma:migrate:deploy`
-3. Start the API:
+7. Start the API:
    - `npm run dev`
-4. (optional) Run the tests:
-   -  `npm run test `
+8. Optional: run tests
+   - `npm run test`
 
-Note: 
-5. If you are going to test endpoints with Postman, there is a Pre Request script at the bottom which will make your life easier for the User Id and idempotency key
+If you are testing endpoints in Postman, use the pre-request script at the bottom to auto-set `x-user-id` and `idempotency-key`.
 
 ## Migrations
 
