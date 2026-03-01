@@ -29,12 +29,7 @@ purchasesRouter.post("/", async (request, response) => {
   const { itemId } = request.body as PurchaseRequestBody;
 
   // itemId maps to the numeric itemId identifier in src/constants/items.ts.
-  const parsedItemId =
-    typeof itemId === "number"
-      ? itemId
-      : Number.parseInt(String(itemId ?? ""), 10);
-
-  if (!Number.isInteger(parsedItemId) || parsedItemId <= 0) {
+  if (typeof itemId !== "number" || !Number.isInteger(itemId) || itemId <= 0) {
     response.status(400).json({
       message: "itemId must be a positive integer item identifier.",
     });
@@ -54,6 +49,7 @@ purchasesRouter.post("/", async (request, response) => {
   try {
     await prisma.$transaction(async (tx) => {
       // Serialize purchase processing per user to prevent overspending races.
+      await tx.$executeRaw`SET LOCAL lock_timeout = '4500ms'`; // deliberately shorter than prisma 5s default
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
 
       const existingIdempotencyRecord = await tx.idempotencyKey.findUnique({
@@ -69,7 +65,7 @@ purchasesRouter.post("/", async (request, response) => {
         return;
       }
 
-      const item = getItemByItemId(parsedItemId);
+      const item = getItemByItemId(itemId);
       if (!item) {
         throw new ItemNotFoundError();
       }
@@ -111,7 +107,7 @@ purchasesRouter.post("/", async (request, response) => {
       error.code === "P2002" // unique constraint violation
     ) {
       // Another request with the same idempotency key likely won the race and already wrote the records.
-      // We treat this as success to preserve idempotent behavior.
+      // Treat this as success to preserve idempotency behavior.
       response.status(204).send();
       return;
     }
@@ -126,6 +122,18 @@ purchasesRouter.post("/", async (request, response) => {
     if (error instanceof InsufficientBalanceError) {
       response.status(409).json({
         message: "Insufficient balance.",
+      });
+      return;
+    }
+
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      (error.code === "P2010" || error.code === "P2028")
+    ) {
+      // P2010: Postgres Lock Timeout
+      // P2028: Prisma Transaction Timeout
+      response.status(409).json({
+        message: "Another purchase is currently processing. Please try again in a moment.",
       });
       return;
     }

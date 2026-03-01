@@ -54,7 +54,8 @@ Items are hardcoded in `src/constants/items.ts`
 Tradeoffs: Indexes speed up reads but add write cost (each insert/update must update the index).  For this app, reads (balance, idempotency checks) are common and writes are less frequent, so the tradeoff is favorable.
 
 ## Concurrency Approach
-Purchases run inside a Prisma transaction and acquire a Postgres transaction-scoped advisory lock keyed by `userId` (`pg_advisory_xact_lock(hashtext(userId))`). This serializes purchase processing per user so concurrent requests cannot both pass the balance check and overspend below zero.
+Purchases run inside a Prisma transaction and acquire a Postgres transaction-scoped advisory lock keyed by userId `(pg_advisory_xact_lock(hashtext(userId)))`. This serializes processing per user to prevent balance race conditions. We use a 4.5s lock_timeout to match Prisma’s 5s limit; if the lock isn't acquired, the transaction is aborted and rolled back, preventing leftover hanging sessions.
+
 
 ## Idempotency Note
 Credits and purchases require an `idempotency-key` header. The API stores `(user_id, idempotency_key)` in idempotency_keys with a unique index, so retries of the same logical request do not create duplicate ledger rows. If a duplicate key is seen (including a race that triggers `P2002`), the request is treated as already processed and returns success. There is also a unique index on `transaction_id` in `idempotency_keys` so that if something goes wrong, a transaction is not processed twice even if the idempotency key was changed. There is no unique index on `idempotency_keys` because two users should be able to use the same key for different transactions and not have failure. 

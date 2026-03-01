@@ -4,6 +4,7 @@ import { getItemByItemId, ITEMS } from "../constants/items";
 export const itemsRouter = Router();
 
 itemsRouter.get("/", async (_request, response) => {
+  // to do: implement pagination
   response.status(200).json(ITEMS);
 });
 
