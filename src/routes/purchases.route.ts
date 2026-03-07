@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Prisma } from "@prisma/client";
 import { getItemByItemId } from "../constants/items";
 import { prisma } from "../lib/prisma";
+import { cacheGlobal } from "../lib/cache";
 
 type PurchaseRequestBody = {
   itemId?: unknown;
@@ -23,8 +24,9 @@ const getUserBalance = async (tx: Prisma.TransactionClient, userId: string) => {
       userId,
     },
   });
-
-  return -1 * (aggregateResult._sum.amount ?? 0);
+  let amountValue = -1 * Number(aggregateResult._sum.amount ?? 0);
+  cacheGlobal.setUserBalance(userId, amountValue);
+  return amountValue;
 };
 
 purchasesRouter.post("/", async (request, response) => {

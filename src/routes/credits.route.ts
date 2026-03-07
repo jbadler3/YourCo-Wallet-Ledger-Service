@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
+import { cacheGlobal } from "../lib/cache";
 
 type CreditRequestBody = {
   amount?: unknown;
@@ -18,7 +19,9 @@ const getUserBalance = async (tx: Prisma.TransactionClient, userId: string) => {
     },
   });
 
-  return -1 * Number(aggregateResult._sum.amount ?? 0);
+  let amountValue = -1 * Number(aggregateResult._sum.amount ?? 0);
+  cacheGlobal.setUserBalance(userId, amountValue);
+  return amountValue;
 };
 
 creditsRouter.post("/", async (request, response) => {
